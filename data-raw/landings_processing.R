@@ -168,6 +168,7 @@ all_landings <- bind_rows(va_landings %>%
                             mutate(metacomm = "VA"),
                           md_landings %>% 
                             mutate(metacomm = "MD")) %>% 
+  mutate(total_landings = total_landings / 2.20462262) %>% 
                             # filter(year > 2004)) %>% # trip data is only valid in MD after 2004
   {. ->> all_landings_complete} %>% 
   filter(species %in% selected_specs) %>% 

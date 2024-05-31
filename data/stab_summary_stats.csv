@@ -1,0 +1,3 @@
+"Region","Term","Trend","Std. error","T statistic","P value","Error structure"
+"Maryland","S_Portfolio",-0.00221976246305795,0.0140801488622661,-0.157651917232692,0.876833723557167,"iid"
+"Virginia","S_Portfolio",-0.0429845453157248,0.00837856914674818,-5.13029666078576,0.000123160944512609,"iid"

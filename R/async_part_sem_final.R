@@ -10,6 +10,11 @@ library(pals)
 source(here::here("data-raw/landings_processing.R"))
 source(here::here("R/stability_calculations/stability_final.R"))
 
+# y axis function
+ylabf <- function(x) {
+  parse(text = paste0(x / 10^5))
+}
+
 ndf_va <- va_df %>% 
   mutate(species_pe2 = log(species_pe),
          s_land_short2 = log(s_land_short),
@@ -56,7 +61,10 @@ ndf_va <- va_df %>%
   # dplyr::select(cpe_land, cpe_bio, sae_land, sae_bio, 
   #               s_land_spec, mean_trips, pe_land,
   #               s_land)
-# VA 1 -------
+
+# SEMs----
+
+## VA 1 -------
 m1 <- lm(cpe_land2 ~ cpe_bio2 +
            sae_land2 +
            sae_bio2, data = ndf_va)
@@ -84,23 +92,17 @@ s <- DHARMa::simulateResiduals(y1, n = 1000);plot(s)
 acf(residuals(y1))
 summary(y1)
 
-# y2 <- lm(mean_trips ~ sae_bio2, data = ndf_va)
-# s <- DHARMa::simulateResiduals(y2, n = 1000);plot(s)
-# acf(residuals(y2))
-# summary(y2)
-
 p1 <- psem(m1, 
            m2,
            m3,
            m4,
            y1)
 p2 <- update(p1, cpe_bio2 %~~% s_land_spec_short2)
-# p3 <- update(p2, mean_trips %~~% sae_bio2)
 summary(p2)
 plot(p2)
 
 
-# VA 2 --------
+## VA 2 --------
 m4 <- lm(s_land2 ~ s_land_short2, data = ndf_va)
 s <- DHARMa::simulateResiduals(m4, n = 1000);plot(s)
 acf(residuals(m4))
@@ -128,6 +130,9 @@ p2 <- psem(m4, m5, m6, m7)
 summary(p2)
 plot(p2)
 
+
+## MD 1 -------
+
 ndf_md <- md_df %>% 
   mutate(species_pe2 = log(species_pe),
          s_land_short2 = log(s_land_short),
@@ -141,25 +146,6 @@ ndf_md <- md_df %>%
          s_val2 = log(s_val),
          s_land_short_sqrd = s_land_short^2)
 
-
-ggplot(ndf_md) + 
-  geom_point(aes(y = cpe_land2, x = year))
-
-ggplot(ndf_md) + 
-  geom_point(aes(y = cpe_land2, x = sae_bio2))
-
-
-ggplot(pred_out_ann) + 
-  geom_line(aes(y = est, x = year, color = common)) +
-  facet_wrap(~metacomm)
-
-ggplot(md_landings %>% 
-         filter(species %in% md_specs) %>% 
-         group_by(year, species) %>% 
-         dplyr::summarise(total_landings = sum(total_landings))) + 
-  geom_line(aes(y = total_landings, x = year, color = species))
-
-# md 1 -------
 m8 <- lm(cpe_land2 ~ cpe_bio2 + sae_land2 + sae_bio2 + 
            land_ratio, data = ndf_md)
 performance::check_collinearity(m8)
@@ -181,7 +167,8 @@ p3 <- psem(m8, m9, m10)
 summary(p3)
 plot(p3) 
 
-# md 2 --------
+## MD 2 -------
+
 m11 <- lm(s_land2 ~ s_land_short2, data = ndf_md)
 s <- DHARMa::simulateResiduals(m11, n = 1000);plot(s)
 acf(residuals(m11))
@@ -211,18 +198,7 @@ summary(p3)
 plot(p3, alpha = 0.05)
 
 
-# asynchrony in communities contribute to fishery asynchrony but only
-# after unevenness in species' population variabilities are accounted for. 
-# This suggests that fisheries in VA are stabilized by the compensatory dynamics
-# of the species that they target. The CPE_land ~ SAE_bio effect occurs 
-# because the evenness of population variabilities increased following the decline
-# of biomass dominant species like Atlantic croaker, while at the same time harvest
-# seasonal compensation has declined. This could be due to a decline in fishing effort
-# for Atlanic croaker as the have declined, with more Atlantic croaker being caught
-# later in the year, resulting in greater overlap between Atlantic croaker and spot harvests.
-# 
-
-
+# SHR-CPE------
 fill_vec <- setNames(ggsci::pal_d3("category20")(n = 6),unique(c(va_specs, 
                                                                  md_specs)))
 
@@ -254,11 +230,12 @@ ggplot() +
                 xmin = 3, xmax = 5),
             fill = "#FFCCCC80",
             color = "#FFCCCC80") +
-  labs(y = "Total harvests (lbs)",
-       x = "Month") +
+  labs(x = "Month",
+       y = labs(y = "Harvests (&times;10<sup>5</sup> lbs)"),
+       color = "Year") +
   scale_x_continuous(expand = c(0.01, 0.01)) +
   scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = function(x) format(x, scientific = TRUE)) +
+                     labels = ylabf) +
   geom_line(aes(y = total_landings, x = month, color = species),
             linewidth = 1) +
   geom_point(aes(y = total_landings, x = month, color = species)) +
@@ -285,11 +262,12 @@ cpe_fig_right <-
                 xmin = 3, xmax = 5),
             fill = "#FFCCCC80",
             color = "#FFCCCC80") +
-  labs(y = "Total harvests (lbs)",
-       x = "Month") +
+  labs(x = "Month",
+       y = labs(y = "Harvests (&times;10<sup>5</sup> lbs)"),
+       color = "Year") +
   scale_x_continuous(expand = c(0.01, 0.01)) +
   scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = function(x) format(x, scientific = TRUE)) +
+                     labels = ylabf) +
   geom_line(aes(y = total_landings, x = month, color = species),
             linewidth = 1) +
   geom_point(aes(y = total_landings, x = month, color = species)) +
@@ -357,13 +335,26 @@ ggsave(cpe_fig_guide, filename = here::here("figs/cpe_fig_guide.png"),
        width = 8, height = 4)
 
 
-# biomass trends ----
+# Interannual biomass ----
+
+## Trends----
+
 ac <- pred_out_ann %>% filter(common == "Atlantic croaker",
                               metacomm == "VA")
 
-mod_ac <- lm(est ~ year, data = ac)
-summary(mod_ac)
+mod_ac1 <- lm(est ~ year, data = ac)
+s <- DHARMa::simulateResiduals(mod_ac1, 1000); plot(s)
+
+mod_ac2 <- gam(est ~ s(year), data = ac)
+s <- DHARMa::simulateResiduals(mod_ac2, 1000); plot(s)
 acf(residuals(mod_ac))
+draw(mod_ac)
+
+mod_ac <- gamm(est ~ s(year), data = ac,
+               correlation = corARMA(form  = ~year, p= 1))
+acf(residuals(mod_ac$lme, type = "normalized"))
+draw(mod_ac$gam)
+
 
 sp <- pred_out_ann %>% filter(common == "spot",
                               metacomm == "VA")
@@ -405,17 +396,20 @@ biomass_trend_stats <-
 write.csv(biomass_trend_stats, file = here::here("data/biomass_trend_stats.csv"),
           row.names = F)
 
-# biomass time series----
+## Time series----
+
 fill_vec <- setNames(ggsci::pal_d3("category20")(n = 6),unique(c(va_specs, 
                                                                  md_specs)))
 annual_biomass <- 
   ggplot(data = pred_out_ann) +
   geom_line(aes(y = est, x = year, color = common),
             linewidth = 1, show.legend = F) +
-  labs(y = "Biomass (kg)") +
+  labs(y = "Biomass (&times;10<sup>5</sup> kg)",
+       x = "Year") +
+  dream::theme_fade()+
   scale_color_manual(values = fill_vec) +
   scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = function(x) format(x, scientific = TRUE)) +
+                     labels = ylabf) +
   facet_wrap(~metacomm) +
   theme_bw() +
   theme(axis.title.y = element_markdown(size = 15),
@@ -430,6 +424,8 @@ ggsave(annual_biomass, file = here::here("figs/annual_biomass_time_series.png"),
        dpi = 300,
        width = 7,
        height = 3)
+
+# interannual harvest time series-----
 
 total_harvests <- 
   bind_rows(
@@ -455,10 +451,12 @@ total_harvests <-
 annual_harvests <- ggplot(data = total_harvests) +
   geom_line(aes(y = total_landings, x = year, color = species),
             linewidth = 1) +
-  labs(y = "Harvests (lbs)") +
+  labs(y = "Harvests (&times;10<sup>5</sup> lbs)",
+       x = "Year") +
+  dream::theme_fade()+
   scale_color_manual(values = fill_vec) +
   scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = function(x) format(x, scientific = TRUE)) +
+                     labels = ylabf) +
   facet_wrap(~metacomm) +
   theme_bw() +
   theme(axis.title.y = element_markdown(size = 15),
@@ -482,33 +480,50 @@ ggsave(biomass_and_harvests,
        width = 7,
        height = 5.5)
 
-# trends in sae and cpe-----
-## community----
+# Trends in SAE and CPE-----
+## Community----
 sae_bio_mod <- lm(sae_bio ~ year, data = ndf_va)
 summary(sae_bio_mod)
+s <- DHARMa::simulateResiduals(sae_bio_mod, 1000);plot(s)
 acf(residuals(sae_bio_mod))
 sae_bio_trend = 
   predict(sae_bio_mod,
           newdata = tibble(year = 2002:2018),
           se.fit = T)
 
+# cpe_bio_mod1 <- lm(cpe_bio ~ year, data = ndf_va)
+# s <- DHARMa::simulateResiduals(cpe_bio_mod1, 1000);plot(s)
+# acf(residuals(cpe_bio_mod1))
+
 cpe_bio_mod <- gls(cpe_bio ~ year, data = ndf_va,
                    correlation = corARMA(p = 2))
-summary(cpe_bio_mod)
 acf(residuals(cpe_bio_mod, type = "normalized"))
+
+summary(cpe_bio_mod)
+plot(cpe_bio_mod)
 cpe_bio_trend = 
   predict(cpe_bio_mod,
           newdata = tibble(year = 2002:2018),
           se.fit = T)
 
-## harvests----
-sae_land_mod <- lm(sae_land ~ year, data = ndf_va)
+## Harvests----
+sae_land_mod1 <- lm(sae_land ~ year, data = ndf_va)
+s <- DHARMa::simulateResiduals(sae_land_mod1, 1000);plot(s)
+
+sae_land_mod <- gam(sae_land ~ s(year, k = 3), data = ndf_va)
+s <- DHARMa::simulateResiduals(sae_land_mod, 1000);plot(s)
 summary(sae_land_mod)
 acf(residuals(sae_land_mod))
+draw(sae_land_mod)
+
 sae_land_trend = 
   predict(sae_land_mod,
           newdata = tibble(year = 2002:2018),
           se.fit = T)
+
+cpe_land_mod1 <- lm(cpe_land ~ year, data = ndf_va)
+s <- DHARMa::simulateResiduals(cpe_land_mod1, 1000);plot(s)
+acf(residuals(cpe_bio_mod))
 
 cpe_land_mod <- gls(cpe_land ~ year, data = ndf_va,
                     correlation = corAR1())
@@ -568,18 +583,6 @@ asynchrony_trend_stats <-
                   `Std. error` = std.error,
                   `T statistic` = statistic,
                   `P value` = p.value,
-                  `Error structure`),
-  
-  broom.mixed::tidy(sae_land_mod) %>% 
-    filter(term == "year") %>% 
-    mutate(Term = "SAE_harvests",
-           `Error structure` = "iid",
-           System = "Fishery") %>% 
-    dplyr::select(Term,
-                  Trend = estimate,
-                  `Std. error` = std.error,
-                  `T statistic` = statistic,
-                  `P value` = p.value,
                   `Error structure`)
 )
 
@@ -587,7 +590,25 @@ write.csv(asynchrony_trend_stats,
           file = here::here("data/asynchrony_trend_stats.csv"),
           row.names = F)
 
-# time series of sae and cpe-----
+asynchrony_trend_stats_nonlinear <-
+  broom.mixed::tidy(sae_land_mod) %>% 
+    filter(term == "s(year)") %>% 
+    mutate(Term = "SAE_harvests",
+           `Error structure` = "iid",
+           System = "Fishery") %>% 
+    dplyr::select(Term,
+                  EDF = edf,
+                  `Ref. DF` = ref.df,
+                  `T statistic` = statistic,
+                  `P value` = p.value,
+                  `Error structure`) %>% 
+    mutate(Trend = "Non-linear")
+
+write.csv(asynchrony_trend_stats_nonlinear,
+          file = here::here("data/asynchrony_trend_stats_nonlinear.csv"),
+          row.names = F)
+
+# Time series of SAE and CPE-----
 sae_bio_trend_plt <- ndf_va %>% 
   ggplot() +
     geom_line(data = asynchrony_trend_preds,
@@ -602,7 +623,7 @@ sae_bio_trend_plt <- ndf_va %>%
     labs(y = "SAE<sub>Species</sub>") +
     geom_text(data = asynchrony_trend_stats %>% 
                 filter(Term == "SAE_species"),
-              aes(y = 1.8, x = 2003.5, label = paste("P < 0.001")), #hacky here - couldn't get print to work
+              aes(y = 1.8, x = 2004.5, label = paste("P < 0.001")), #hacky here - couldn't get print to work
               size = 4) +
     theme_bw() +
     theme(axis.title.y = element_markdown(size = 14),
@@ -622,7 +643,7 @@ cpe_bio_trend_plt <- ndf_va %>%
   labs(y = "CPE<sub>Species</sub>") +
   geom_text(data = asynchrony_trend_stats %>% 
               filter(Term == "CPE_species"),
-            aes(y = 1.7, x = 2003.5, label = paste("P =",round(`P value`,
+            aes(y = 1.85, x = 2004.5, label = paste("P =",round(`P value`,
                                                              3))),
             size = 4) +
   theme_bw() +
@@ -631,6 +652,17 @@ cpe_bio_trend_plt <- ndf_va %>%
 
 sae_land_trend_plt <- ndf_va %>% 
   ggplot() +
+  geom_line(data = asynchrony_trend_preds,
+            aes(y = sae_land_pred, x = year),
+            linewidth = 1) +
+  geom_ribbon(data = asynchrony_trend_preds,
+              aes(ymin = sae_land_pred - 1.96 * sae_land_se,
+                  ymax = sae_land_pred + 1.96 * sae_land_se,
+                  x = year),
+              alpha = 0.25) +
+  geom_text(data = asynchrony_trend_stats_nonlinear,
+              aes(y = 1.85, x = 2004.5, label = paste("P =",round(`P value`,
+                                                                  3))),            size = 4) +
   geom_line(aes(y = sae_land, x = year)) +
   labs(y = "SAE<sub>Harvest</sub>") +
   theme_bw() +
@@ -651,7 +683,7 @@ cpe_land_trend_plt <- ndf_va %>%
   labs(y = "CPE<sub>Harvest</sub>") +
   geom_text(data = asynchrony_trend_stats %>% 
               filter(Term == "CPE_harvests"),
-            aes(y = 1.7, x = 2003.5, label = paste("P =",
+            aes(y = 1.7, x = 2004.5, label = paste("P =",
                                                    round(`P value`,
                                                              3))),
             size = 4) +
@@ -674,7 +706,7 @@ ggsave(async_trend_plts,
        width = 7.5,
        height = 5)
 
-# landings shift-----
+# Landings shift-----
 land_shift_df <- 
 va_landings %>% 
   filter(species %in% c("spot", "Atlantic croaker","striped bass")) %>% 
@@ -713,14 +745,14 @@ shift_summaries <-
   ) %>% 
   filter(term == "year")
   
-## figure---- 
+## Figure---- 
 shift_plt <- ggplot() +
   geom_smooth(data = land_shift_df %>% 
                filter(species %in% c("striped bass", "Atlantic croaker")),
             aes(y = weighted_month, x = year, group = species),
             method = "lm",
             color = "black") + 
-  labs(y = "Average month weighted by monthly harvests") +
+  labs(y = "Harvest-weighted average<br>month of harvest") +
   geom_line(data = land_shift_df,
              aes(y = weighted_month, x = year, color = species),
             linewidth = 1) + 
@@ -728,7 +760,7 @@ shift_plt <- ggplot() +
               filter(species %in% c("Atlantic croaker",
                                     "striped bass")),
             aes(y = c(7.5, 4.75),
-                x = c(2007.5, 2012.5),
+                x = c(2006.5, 2011.5),
                 label = c("P < 0.001", "P < 0.001"))) +
   scale_color_manual(values = fill_vec) +
     theme_bw() +
@@ -744,8 +776,7 @@ ggsave(shift_plt,
        width = 5,
        height = 4)
 
-
-## table----
+## Table----
 harvest_shift_stats <- shift_summaries %>% 
   filter(term == "year") %>% 
   mutate(Term = "Species",
@@ -761,21 +792,23 @@ write.csv(harvest_shift_stats,
           here::here("data/harvest_shift_stats.csv"),
           row.names = F)
 
-# effort trends-----
+# Effort and CPUE-----
 cpue <-
   all_landings_complete %>% 
   filter((species %in% va_specs & metacomm == "VA") |
            (species %in% md_specs & metacomm == "MD")) %>% 
   group_by(species, year, metacomm) %>%
   dplyr::summarise(cpue = sum(total_landings)/sum(total_trips)) 
-# ggplot() +
-# geom_line(aes(y = cpue, x = year,
-#               color = species)) +
-# facet_wrap(~metacomm)
+
+## Trends-----
+
+# CPUE
 
 va_cpue <- 
   cpue %>% 
   filter(metacomm == "VA")
+
+# Atlantic croaker
 
 ac_cpue_mod <- lm(cpue ~ year, data = va_cpue %>% 
                     filter(species == "Atlantic croaker"))
@@ -783,15 +816,114 @@ summary(ac_cpue_mod)
 acf(residuals(ac_cpue_mod))
 s <- DHARMa::simulateResiduals(ac_cpue_mod, n = 1000);plot(s)
 
+# Spot
+
 sp_cpue_mod <- lm(cpue ~ year, data = va_cpue %>% 
                     filter(species == "spot"))
 summary(sp_cpue_mod)
 acf(residuals(sp_cpue_mod))
 
+# Striped bass
+
 sb_cpue_mod <- lm(cpue ~ year, data = va_cpue %>% 
                     filter(species == "striped bass"))
 summary(sb_cpue_mod)
 acf(residuals(sb_cpue_mod))
+
+# Trips out
+va_effort <- 
+  ndf_va %>% 
+  dplyr::select(`Atlantic croaker` = ac_effort, 
+                spot = sp_effort,
+                `striped bass` = sb_effort, year) %>% 
+  gather(species, trips, -year)
+
+# Atlantic croaker
+
+ac_eff_mod <- lm(trips ~ year, data = va_effort %>% 
+                    filter(species == "Atlantic croaker"))
+s <- DHARMa::simulateResiduals(ac_eff_mod, n = 1000);plot(s)
+summary(ac_eff_mod)
+acf(residuals(ac_eff_mod))
+
+ac_eff_trend = 
+  predict(ac_eff_mod,
+          newdata = tibble(year = 2002:2018),
+          se.fit = T)
+
+# Spot
+
+sp_eff_mod1 <- lm(trips ~ year, data = va_effort %>% 
+                   filter(species == "spot"))
+s <- DHARMa::simulateResiduals(sp_eff_mod1, n = 1000);plot(s)
+acf(residuals(sp_eff_mod1))
+
+sp_eff_mod <- gls(trips ~ year, data = va_effort %>% 
+                   filter(species == "spot"),
+                  correlation = corAR1())
+summary(sp_eff_mod)
+acf(residuals(sp_eff_mod, type = "normalized"))
+
+sp_eff_trend = 
+  predict(sp_eff_mod,
+          newdata = tibble(year = 2002:2018),
+          se.fit = T)
+
+# Striped bass
+
+sb_eff_mod1 <- lm(trips ~ year, data = va_effort %>% 
+                    filter(species == "striped bass"))
+s <- DHARMa::simulateResiduals(sb_eff_mod1, n = 1000);plot(s)
+acf(residuals(sb_eff_mod1))
+
+sb_eff_mod2 <- gam(trips ~ s(year), data = va_effort %>% 
+                   filter(species == "striped bass"))
+s <- DHARMa::simulateResiduals(sb_eff_mod2, n = 1000);plot(s)
+acf(residuals(sb_eff_mod2))
+
+# fitting the GAM with correlated errors reverts the model to linear - 
+# fitting using GLS to make extracting slope easy
+
+sb_eff_mod <- gls(trips ~ year, data = va_effort %>% 
+                     filter(species == "striped bass"),
+                   correlation = corAR1())
+acf(residuals(sb_eff_mod, type = "normalized"))
+summary(sb_eff_mod)
+
+sb_eff_trend = 
+  predict(sb_eff_mod,
+          newdata = tibble(year = 2002:2018),
+          se.fit = T)
+
+effort_trend_preds <- 
+  tibble(ac_eff_pred = ac_eff_trend$fit,
+         ac_eff_se = ac_eff_trend$se.fit,
+         
+         sp_eff_pred = sp_eff_trend$fit,
+         sp_eff_se = sp_eff_trend$se.fit,
+         
+         sb_eff_pred = sb_eff_trend$fit,
+         sb_eff_se = sb_eff_trend$se.fit) %>% 
+  mutate(year = 2002:2018) %>% 
+  gather(mod, value, -year) %>% 
+  mutate(common = ifelse(str_detect(mod, "ac_eff"), "Atlantic croaker",
+                         ifelse(str_detect(mod, "sp_eff"), "spot",
+                                           ifelse(str_detect(mod, "sb_eff"),
+                                                             "striped bass",
+                                                             NA))),
+         component = ifelse(str_detect(mod, "_se"), "SE",
+                            "fit")) %>% 
+  dplyr::select(-mod) %>% 
+  spread(component, value)
+
+
+# model summaries
+broom::tidy(ac_eff_mod)
+broom::tidy(sp_eff_mod)
+broom::tidy(sb_eff_mod)
+
+
+## Figures-----
 
 effort_declines <- 
   ndf_va %>% 
@@ -799,9 +931,22 @@ effort_declines <-
                 `striped bass` = sb_effort, year) %>% 
   gather(common, value, -year) %>% 
 ggplot() + 
+  geom_line(data = effort_trend_preds,
+            aes(y = fit, x = year, group = common),
+            linewidth = 1) +
+  geom_ribbon(data = effort_trend_preds,
+              aes(ymin = fit - 1.96 * SE,
+                  ymax = fit + 1.96 * SE,
+                  group = common,
+                  x = year),
+              alpha = 0.25) +
   geom_line(aes(y = value, x = year, 
                 color = common),
             linewidth = 1) +
+  annotate("text",
+           y = 3500,
+           x = 2015,
+           label = "All P < 0.001") +
   scale_color_manual(values = fill_vec) +
   labs(y = "Total trips") +
   theme_bw() +
@@ -809,8 +954,10 @@ ggplot() +
         axis.title.x = element_blank(),
         legend.position = "bottom",
         legend.title = element_blank(),
-        legend.text = element_text(size = 10)) +
-va_cpue %>% 
+        legend.text = element_text(size = 10)) 
+
+cpue_plt <- 
+  va_cpue %>% 
   ggplot() + 
   geom_line(aes(y = cpue, x = year, 
                 color = species),
@@ -822,20 +969,24 @@ va_cpue %>%
         axis.title.x = element_blank(),
         legend.position = "bottom",
         legend.title = element_blank(),
-        legend.text = element_text(size = 10)) +
+        legend.text = element_text(size = 10)) 
+  
+effort_cpue_plt <- 
+  effort_declines + 
+  cpue_plt + 
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = "a",
                   tag_suffix = ")",
                   tag_prefix = "(")  & 
   theme(legend.position = "bottom")
 
-ggsave(effort_declines,
+ggsave(effort_cpue_plt,
        file = here::here("figs/effort_declines_cpue.png"),
        dpi = 300,
        width = 7.5,
        height = 3.5)
 
-# harvest stability trends-----
+# Harvest stability trends-----
 stab_trend_mod_va <- lm(s_land ~ year, data = ndf_va)
 summary(stab_trend_mod_va)
 acf(residuals(stab_trend_mod_va))
@@ -918,13 +1069,9 @@ ggsave(stab_plts,
        width = 8,
        height = 3)
 
-# within-year biomass and harvest figures----
+# Within-year biomass and harvest figures----
 
-ylabf <- function(x) {
-  parse(text = paste0(x / 10^5))
-}
-
-## harvests-----
+## Harvests-----
 md_specs <- c("Atlantic croaker",
               "channel catfish",
               "gizzard shad",
@@ -965,7 +1112,26 @@ md_harvests_plt <-
   scale_y_continuous(expand = c(0.01, 0.01),
                      labels = ylabf) +
   scale_color_manual(values=as.vector(coolwarm(17))) +
-  theme(axis.title.y = element_markdown(size = 8)) 
+  theme(axis.title.y = element_markdown(size = 8),
+        axis.title.x = element_blank()) 
+
+# vertical figure orientation
+annual_harvest_md <-
+  ggplot(data = total_harvests %>% 
+           filter(metacomm == "MD")) +
+    geom_line(aes(y = total_landings, 
+                  x = year, color = species),
+              linewidth = 1, show.legend = F) +
+    labs(y = "Harvests (&times;10<sup>5</sup> lbs)",
+         x = "Year") +
+    dream::theme_fade()+
+    scale_color_manual(values = fill_vec) +
+    scale_y_continuous(expand = c(0.01, 0.01),
+                       labels = ylabf) +
+    theme_bw() +
+    theme(axis.title.y = element_markdown(size = 8),
+          axis.title.x = element_blank(),
+          legend.title = element_blank())
 
 va_harvests_plt <-
   va_landings %>% 
@@ -999,69 +1165,226 @@ va_harvests_plt <-
   scale_color_manual(values=as.vector(coolwarm(17)))  +
   theme(axis.title.y = element_markdown(size = 8))
 
-within_yr_harvests <- 
-  md_harvests_plt +
-  va_harvests_plt +
-  plot_layout(nrow = 2, guides = "collect") +
+annual_harvest_va <-
+  ggplot(data = total_harvests %>% 
+           filter(metacomm == "VA") %>% 
+           ungroup() %>% 
+           add_row(species = c("gizzard shad",
+                                "channel catfish",
+                                "white perch"))) +
+  geom_line(aes(y = total_landings, 
+                x = year, color = species),
+            linewidth = 1) +
+  labs(y = "Harvests (&times;10<sup>5</sup> lbs)",
+       x = "Year") +
+  dream::theme_fade()+
+  scale_color_manual(values = fill_vec) +
+  scale_y_continuous(expand = c(0.01, 0.01),
+                     labels = ylabf) +
+  theme_bw() +
+  theme(axis.title.y = element_markdown(size = 8),
+        legend.title = element_blank(),
+        legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 3))
+
+within_yr_hv <-
+  md_harvests_plt + 
+    va_harvests_plt + 
+  plot_layout(guides = "collect",
+              nrow = 2,
+              heights = c(1, 0.5)) & 
+  theme(legend.position = "bottom",
+        legend.text = element_markdown(size = 8),
+        legend.title = element_blank(),
+        legend.key.spacing = unit(0.025, "cm")) & 
+  guides(color = guide_legend(nrow = 3))
+
+# ggsave(within_yr,
+#        file = here::here("figs/within_year_harvests.png"),
+#        dpi = 300,
+#        height = 6.5,
+#        width = 8)
+
+between_yr_hv <- 
+  plot_spacer() +
+  annual_harvest_md + 
+  plot_spacer() +
+  annual_harvest_va + 
+  plot_layout(guides = "collect",
+              nrow = 4,
+              heights = c(0.15, 0.35, 0.15,0.35)) & 
+  theme(legend.position = "bottom",
+        legend.text = element_markdown(size = 8),
+        legend.key.spacing = unit(0.025, "cm"))
+
+all_harvests <- 
+  (within_yr_hv |
+  between_yr_hv) +
+  plot_layout(widths = c(0.66,0.33)) + 
+  plot_annotation(tag_levels = "a",
+                  tag_suffix = ")",
+                  tag_prefix = "(")
+  
+ggsave(all_harvests,
+       file = here::here("figs/all_harvests.png"),
+       dpi = 300,
+       height = 6.5,
+       width = 8)
+
+## Biomass-----
+md_bio_plt <- 
+  pred_out_seas %>% 
+    filter(metacomm == "MD",
+           common %in% md_specs) %>% 
+    mutate(year = factor(year, levels = 2002:2018)) %>% 
+    ggplot() +
+    geom_line(aes(y = est, x = month, color = year,
+                  group = year)) +
+    facet_wrap(~common, scales = "free_y") +
+    labs(x = "Month",
+         y = labs(y = "Biomass (&times;10<sup>5</sup> kg)"),
+         color = "Year") +
+    dream::theme_fade()+
+    scale_x_continuous(breaks = month_vec,
+                       limits = c(1,12)) +
+    scale_y_continuous(expand = c(0.01, 0.01),
+                       labels = ylabf) +
+    scale_color_manual(values=as.vector(coolwarm(17))) +
+    theme(axis.title.y = element_markdown(size = 8),
+          axis.title.x = element_blank()) 
+
+annual_bio_md <- 
+  ggplot(data = pred_out_ann %>% 
+           filter(metacomm == "MD")) +
+  geom_line(aes(y = est, x = year, color = common),
+            linewidth = 1, show.legend = F) +
+  labs(y = "Biomass (&times;10<sup>5</sup> kg)",
+       x = "Year") +
+  dream::theme_fade()+
+  scale_color_manual(values = fill_vec) +
+  scale_y_continuous(expand = c(0.01, 0.01),
+                     labels = ylabf) +
+  theme_bw() +
+  theme(axis.title.y = element_markdown(size = 8),
+        axis.title.x = element_blank(),
+        legend.title = element_blank())
+  
+va_bio_plt <- 
+  pred_out_seas %>% 
+    filter(metacomm == "VA",
+           common %in% va_specs) %>% 
+    mutate(year = factor(year, levels = 2002:2018)) %>% 
+  ggplot() +
+    geom_line(aes(y = est, x = month, color = year,
+                  group = year)) +
+    facet_wrap(~common, scales = "free_y") +
+    dream::theme_fade()+
+    labs(x = "Month",
+         y = labs(y = "Biomass (&times;10<sup>5</sup> kg)"),
+         color = "Year") +
+    scale_x_continuous(breaks = month_vec,
+                       limits = c(1,12)) +
+    scale_y_continuous(expand = c(0.01, 0.01),
+                       labels = ylabf)+
+    scale_color_manual(values=as.vector(coolwarm(17))) +
+    theme(axis.title.y = element_markdown(size = 8))
+  
+annual_bio_va <- 
+  ggplot(data = pred_out_ann %>% 
+           filter(metacomm == "VA") %>% 
+           ungroup() %>% 
+           add_row(common = c("gizzard shad",
+                               "channel catfish",
+                               "white perch"))) +
+  geom_line(aes(y = est, x = year, color = common),
+            linewidth = 1, show.legend = T) +
+  labs(y = "Biomass (&times;10<sup>5</sup> kg)",
+       x = "Year") +
+  dream::theme_fade()+
+  scale_color_manual(values = fill_vec) +
+  scale_y_continuous(expand = c(0.01, 0.01),
+                     labels = ylabf) +
+  theme_bw() +
+  theme(axis.title.y = element_markdown(size = 8),
+        axis.title.x = element_blank(),
+        legend.title = element_blank()) +
+  guides(color = guide_legend(nrow = 3))
+
+# ggsave(within_yr_biomass,
+#        file = here::here("figs/within_year_biomass.png"),
+#        dpi = 300,
+#        height = 6.5,
+#        width = 8)  
+
+within_yr_bio <-
+  md_bio_plt + 
+  va_bio_plt + 
+  plot_layout(guides = "collect",
+              nrow = 2,
+              heights = c(1, 0.5)) & 
+  theme(legend.position = "bottom",
+        legend.text = element_markdown(size = 8),
+        legend.title = element_blank(),
+        legend.key.spacing = unit(0.025, "cm")) & 
+  guides(colour = guide_legend(nrow = 3))
+# ggsave(within_yr,
+#        file = here::here("figs/within_year_harvests.png"),
+#        dpi = 300,
+#        height = 6.5,
+#        width = 8)
+
+between_yr_bio <- 
+  plot_spacer() +
+  annual_bio_md + 
+  plot_spacer() +
+  annual_bio_va + 
+  plot_layout(guides = "collect",
+              nrow = 4,
+              heights = c(0.15, 0.35, 0.15,0.35)) & 
+  theme(legend.position = "bottom",
+        legend.text = element_markdown(size = 8),
+        legend.key.spacing = unit(0.025, "cm"))
+
+all_biomass <- 
+  (within_yr_bio |
+     between_yr_bio) +
+  plot_layout(widths = c(0.66,0.33)) + 
   plot_annotation(tag_levels = "a",
                   tag_suffix = ")",
                   tag_prefix = "(")
 
-ggsave(within_yr_harvests,
-       file = here::here("figs/within_year_harvests.png"),
+ggsave(all_biomass,
+       file = here::here("figs/all_biomass.png"),
        dpi = 300,
        height = 6.5,
-       width = 8)  
+       width = 8)
 
-## biomass-----
-within_yr_biomass <- 
-pred_out_seas %>% 
-  filter(metacomm == "MD",
-         common %in% md_specs) %>% 
-  mutate(year = factor(year, levels = 2002:2018)) %>% 
-  ggplot() +
-  geom_line(aes(y = est, x = month, color = year,
-                group = year)) +
-  facet_wrap(~common, scales = "free_y") +
-  labs(x = "Month",
-       y = labs(y = "Biomass (&times;10<sup>5</sup> kg)"),
-       color = "Year") +
-  dream::theme_fade()+
-  scale_x_continuous(breaks = month_vec,
-                     limits = c(1,12)) +
-  scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = ylabf) +
-                     # labels = function(x) format(x, scientific = TRUE)) +
-  scale_color_manual(values=as.vector(coolwarm(17))) +
-  theme(axis.title.y = element_markdown(size = 8)) +
-  
-pred_out_seas %>% 
-  filter(metacomm == "VA",
-         common %in% va_specs) %>% 
-  mutate(year = factor(year, levels = 2002:2018)) %>% 
-ggplot() +
-  geom_line(aes(y = est, x = month, color = year,
-                group = year)) +
-  facet_wrap(~common, scales = "free_y") +
-  dream::theme_fade()+
-  labs(x = "Month",
-       y = labs(y = "Biomass (&times;10<sup>5</sup> kg)"),
-       color = "Year") +
-  scale_x_continuous(breaks = month_vec,
-                     limits = c(1,12)) +
-  scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = scientific_10_5)+
-  scale_color_manual(values=as.vector(coolwarm(17))) +
-  plot_layout(nrow = 2, guides = "collect",
-              heights = c(1, 0.4)) +
-  plot_annotation(tag_levels = "a",
-                  tag_suffix = ")",
-                  tag_prefix = "(") &
-  theme(axis.text = element_markdown(size = 8),
-        axis.title.y = element_markdown(size = 8))
+# Virginia relevant trends -----
+va_trend_plt <- 
+  sae_bio_trend_plt +
+    cpe_bio_trend_plt +
+    sae_land_trend_plt +
+    cpe_land_trend_plt +
+    shift_plt +
+    effort_declines +
+    plot_layout(nrow = 3,
+                guides = "collect") +
+    plot_annotation(tag_levels = "a",
+                    tag_suffix = ")",
+                    tag_prefix = "(") & 
+    theme(legend.position = "bottom")
 
-ggsave(within_yr_biomass,
-       file = here::here("figs/within_year_biomass.png"),
-       dpi = 300,
-       height = 6.5,
-       width = 8)  
+ggsave(va_trend_plt,
+       file = here::here("figs/va_trend_plts.svg"),
+       width = 6.5,
+       height = 8)
+
+# Summary stats for VA biomass decline-----
+pred_out_ann %>% 
+  filter(metacomm == "VA") %>% 
+  mutate(year_group = ifelse(year <= 2010, "first", "second")) %>% 
+  group_by(year_group, common) %>% 
+  dplyr::summarise(m = mean(est)) %>% 
+  arrange(common) %>% 
+  group_by(common) %>% 
+  dplyr::summarise(perc_change = (m[year_group == "second"] - m[year_group == "first"])/m[year_group == "first"])
