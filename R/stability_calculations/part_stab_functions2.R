@@ -1,8 +1,21 @@
+# This script was adapted for our work and the original can be found in:
+# 
 # Data S1 to Lamy T, Wang S, Renard D, Lafferty KD, Reed DC and Miller RJ.
 # Species insurance trumps spatial insurance in stabilizing biomass of a marine macroalgal metacommunity. Ecology.
+# 
+# As part of:
+# 
+# Lamy, T., Wang, S., Renard, D., Lafferty, K. D., Reed, D. C., & Miller, R. J. (2019). 
+# Species insurance trumps spatial insurance in stabilizing biomass of a marine macroalgal metacommunity. 
+# Ecology, 100(7), e02719.
+# 
+# ------
+# 
 # File contains two R functions, part_stab_comp() and part_stab_test(),
 # to investigate ecological variability across hierarchical levels
 #
+
+
 part_stab_comp <- function(Y, s, t,
                            Y2 = NULL, s2 = NULL, t2 = NULL,
                            surv_weight = F, cv = F)
