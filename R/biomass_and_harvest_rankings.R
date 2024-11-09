@@ -6,6 +6,20 @@ library(lubridate)
 load(here::here("data/processed_landings.rdata"))
 load(here::here("data/chesmmap.rdata"))
 
+# consumer price index
+cpi <-
+  read.table(here::here("data/Bureau of Labor Statistics Data.txt"),
+           header = T,
+           sep = "\t") %>% 
+  dplyr::select(1:4) %>% 
+  mutate(month = as.numeric(str_extract_all(Period, "\\d{2}"))) %>% 
+  dplyr::rename(year = Year,
+                value = Value)
+
+ref <- cpi %>% 
+  filter(year == 2002,
+         month == 1) %>% 
+  pull(value)
 
 bio %>% 
   filter(common %in% c("gizzard shad",
@@ -124,15 +138,119 @@ va_landings %>%
 
 # average annual value
 va_landings %>% 
+  left_join(., cpi) %>% 
+  dplyr::select(-Series.Id, -Period) %>% 
+  rowwise() %>% 
+  mutate(real_total_value = (total_value * ref)/value) %>% 
+  ungroup() %>% 
   group_by(species, year) %>% 
-  dplyr::summarise(total_value = sum(total_value)) %>% 
+  dplyr::summarise(real_total_value = sum(real_total_value)) %>% 
+  group_by(species) %>% 
+  dplyr::summarise(average_value = mean(real_total_value)) %>% 
+  arrange(desc(average_value))
+
+md_landings %>% 
+  left_join(., cpi) %>% 
+  dplyr::select(-Series.Id, -Period) %>% 
+  rowwise() %>% 
+  mutate(real_total_value = (total_value * ref)/value) %>% 
+  ungroup() %>% 
+  group_by(species, year) %>% 
+  dplyr::summarise(real_total_value = sum(real_total_value)) %>% 
+  group_by(species) %>% 
+  dplyr::summarise(average_value = mean(real_total_value)) %>% 
+  arrange(desc(average_value))
+
+
+# average annual value
+
+
+md_landings %>% 
+  group_by(species, year) %>% 
+  dplyr::summarise(total_value = sum(total_value, na.rm = T)) %>% 
   group_by(species) %>% 
   dplyr::summarise(average_value = mean(total_value)) %>% 
   arrange(desc(average_value))
 
 md_landings %>% 
   group_by(species, year) %>% 
-  dplyr::summarise(total_value = sum(total_value)) %>% 
+  filter(!species %in% c("blue crab")) %>% 
+  dplyr::summarise(total_value = sum(total_value, na.rm = T)) %>% 
+  ggplot() +
+    geom_line(aes(y = total_value, x = year, color = species))
+
+# average annual harvests
+va_landings %>% 
+  group_by(species, year) %>% 
+  dplyr::summarise(total_landings = sum(total_landings)) %>% 
   group_by(species) %>% 
-  dplyr::summarise(average_value = mean(total_value)) %>% 
-  arrange(desc(average_value))
+  dplyr::summarise(average_landings = mean(total_landings)) %>% 
+  arrange(desc(average_landings))
+
+md_landings %>% 
+  group_by(species, year) %>% 
+  dplyr::summarise(total_landings = sum(total_landings)) %>% 
+  group_by(species) %>% 
+  dplyr::summarise(average_landings = mean(total_landings)) %>% 
+  arrange(desc(average_landings))
+
+# total value range by region
+va_specs <- c("Atlantic croaker", "spot", "striped bass")
+
+va_val <- va_landings %>% 
+  filter(species %in% va_specs) %>% 
+  group_by(year, species) %>% 
+  dplyr::summarise(total_value = sum(total_value)) %>% 
+  group_by(year) %>% 
+  dplyr::summarise(total = sum(total_value)) %>% 
+  mutate(state = "va")
+
+
+md_specs <- c("Atlantic croaker","striped bass",
+              "white perch", "gizzard shad", "channel catfish")
+
+md_landings %>% 
+  filter(species %in% md_specs) %>% 
+  group_by(year, species) %>% 
+  dplyr::summarise(total_value = sum(total_value)) %>% 
+  group_by(year) %>% 
+  dplyr::summarise(total = sum(total_value))  %>% 
+  mutate(state = "md") %>% 
+  bind_rows(., 
+            va_val) %>% 
+  group_by(year) %>% 
+  dplyr::summarise(total = sum(total)) %>% 
+  pull(total) %>% 
+  range()
+
+
+# cpe_fig_left <- 
+  md_landings %>% 
+  filter(species %in% md_specs) %>% 
+  right_join(.,tibble(month = 1:12,
+                      metacomm = m) %>% 
+               expand_grid(species = md_specs,
+                           year = c(2002:2018))) %>% 
+  mutate(total_landings = ifelse(is.na(total_landings), 0, total_landings)) %>% 
+  filter(year %in% c(2004)) %>% 
+  ggplot() + 
+  geom_rect(aes(ymin = 0, ymax = Inf,
+                xmin = 3, xmax = 5),
+            fill = "#FFCCCC80",
+            color = "#FFCCCC80") +
+  labs(x = "Month",
+       y = labs(y = "Harvests (&times;10<sup>5</sup> lbs)"),
+       color = "Year") +
+  scale_x_continuous(expand = c(0.01, 0.01)) +
+  scale_y_continuous(expand = c(0.01, 0.01),
+                     labels = ylabf) +
+  geom_line(aes(y = total_landings, x = month, color = species),
+            linewidth = 1) +
+  geom_point(aes(y = total_landings, x = month, color = species)) +
+  scale_color_manual(values = fill_vec) +
+  # guides(color = "none") +
+  theme_bw() +
+  theme(axis.title.y = element_markdown(size = 13),
+        axis.title.x = element_markdown(size = 12),
+        axis.text = element_markdown(size = 12)) 
+

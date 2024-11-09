@@ -185,6 +185,8 @@ if (process){
   mcmc_res <- residuals(hurd_mod, type = "mle-mcmc", mcmc_samples = samps)
   save(samps, mcmc_res,
        file = here::here(paste0("data/model_output/mcmc_res_tw_",ss,".rdata")))
+  stats::qqnorm(mcmc_res, main = paste(selected_species, "MCMC residuals, fam == tweedie"))
+  stats::qqline(mcmc_res)
 } else {
   load(here::here(paste0("data/model_output/mcmc_res_tw_",ss,".rdata")))
   stats::qqnorm(mcmc_res, main = paste(selected_species, "MCMC residuals, fam == tweedie"))

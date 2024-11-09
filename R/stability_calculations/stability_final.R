@@ -162,6 +162,14 @@ for (m in c("MD","VA")){
     sync_land_short <- int_land_sync_short2$patch$phi_SC_k
     cv_sr_land_short <- int_land_sync_short2$part$CV_SR
     
+    cv_sr_land_part <- int_land_sync_short2$CV_SR_part %>%
+      mutate(year = y,
+             metacomm = m,
+             common = row.names(.)) %>%
+      dplyr::rename(CV_SR_part_land = CV_SR_part,
+                    SD_SR_part_land = SD_SR_part,
+                    weight_land = weight)
+    
     ## asynchrony partitioning (adapted Zhao et al. 2022)----
     t_land <- int_land_sync_short %>% 
       mutate(time = c(3,5,7,9,11)) %>% 
@@ -220,13 +228,13 @@ for (m in c("MD","VA")){
     cv_sr_spec_long <- int_land_sync2$part$CV_SR
     cv_cr_land_long <- int_land_sync2$part$CV_CR
    
-    cv_sr_land_part <- int_land_sync2$CV_SR_part %>%
-      mutate(year = y,
-             metacomm = m,
-             common = row.names(.)) %>% 
-      dplyr::rename(CV_SR_part_land = CV_SR_part,
-                    SD_SR_part_land = SD_SR_part,
-                    weight_land = weight)
+    # cv_sr_land_part <- int_land_sync2$CV_SR_part %>%
+    #   mutate(year = y,
+    #          metacomm = m,
+    #          common = row.names(.)) %>%
+    #   dplyr::rename(CV_SR_part_land = CV_SR_part,
+    #                 SD_SR_part_land = SD_SR_part,
+    #                 weight_land = weight)
     
     assign('s_partition', rbind(cv_sr_part %>% 
                                   left_join(.,cv_sr_land_part,
@@ -326,5 +334,4 @@ md_df <-
                                                 na.rm = T)) %>% 
               spread(.,month_grp, mean_land) %>% 
               mutate(land_ratio = spring/`summer/fall`))
-
 

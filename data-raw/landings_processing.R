@@ -168,7 +168,6 @@ all_landings <- bind_rows(va_landings %>%
                             mutate(metacomm = "VA"),
                           md_landings %>% 
                             mutate(metacomm = "MD")) %>% 
-  mutate(total_landings = total_landings / 2.20462262) %>% 
                             # filter(year > 2004)) %>% # trip data is only valid in MD after 2004
   {. ->> all_landings_complete} %>% 
   filter(species %in% selected_specs) %>% 
@@ -207,8 +206,15 @@ for (i in c("CBLE.kml", "CBLW.kml", "CBUE.kml",
                           va_mgmt))
 }
 
+chesmmap_poly <-  
+  st_read(here::here('data',"chesmmap_poly.kml")) %>% 
+  st_zm() %>% 
+  st_transform(.,ncrs)
+
 save(selected_specs, month_vec, all_landings,total_trips_combined,
      total_trips_annual,
-     ncrs, chesmmap_poly, va_mgmt,all_landings_complete,
+     ncrs, 
+     chesmmap_poly,
+     va_mgmt,all_landings_complete,
      file = here::here("data/processed_landings.rdata"))
 

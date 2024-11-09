@@ -181,12 +181,13 @@ sanity(hurd_mod)
 ### Residuals
 
 ```{r, fig.width=5, fig.height=4}
-set.seed(123)
 if (process){
   samps <- sdmTMBextra::predict_mle_mcmc(hurd_mod, mcmc_iter = 201, mcmc_warmup = 200)
   mcmc_res <- residuals(hurd_mod, type = "mle-mcmc", mcmc_samples = samps)
   save(samps, mcmc_res,
        file = here::here(paste0("data/model_output/mcmc_res_tw_",ss,".rdata")))
+  stats::qqnorm(mcmc_res, main = paste(selected_species, "MCMC residuals, fam == tweedie"))
+  stats::qqline(mcmc_res)
 } else {
   load(here::here(paste0("data/model_output/mcmc_res_tw_",ss,".rdata")))
   stats::qqnorm(mcmc_res, main = paste(selected_species, "MCMC residuals, fam == tweedie"))
