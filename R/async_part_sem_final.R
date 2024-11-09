@@ -60,11 +60,6 @@ m1 <- lm(cpe_land ~ cpe_bio +
            sae_land +
            sae_bio,
          data = ndf_va)
-# when sae_land is missing, non-linear patterning in residuals suggests
-# poor fit. This can be remedied by log-transforming the response and 
-# predictor variables. However, because we identified that species statistical
-# averaging was an important predictor of species compensation, we want to test that
-# hypothesis here as well (cpe_land ~ sae_land). This also fixes the residual patterning.
 s <- DHARMa::simulateResiduals(m1, n = 1000);plot(s)
 performance::check_collinearity(m1)
 acf(residuals(m1))
@@ -1519,7 +1514,7 @@ ggsave(va_trend_plt,
        width = 6.5,
        height = 8)
 
-# Summary stats for VA biomass decline-----
+# Summary stats for VA biomass-----
 pred_out_ann %>% 
   filter(metacomm == "VA") %>% 
   mutate(year_group = ifelse(year <= 2010, "first", "second")) %>% 

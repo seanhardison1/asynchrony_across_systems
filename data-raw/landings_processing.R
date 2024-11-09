@@ -97,10 +97,7 @@ va_landings <-
                              species == "catfish, nk" ~ "channel catfish",
                              TRUE ~ species)) %>% 
   filter(!str_detect(species, "crab")) %>%
-  {. ->> species_df} #%>% 
-# mutate(metacomm = "VA",
-# lpt = total_landings/total_trips)# %>%
-# dplyr::rename(metacomm = location)
+  {. ->> species_df} 
 
 
 md_landings <- read_excel(here::here("data/ListofSelectedSpecies.2002-2018.xlsx")) %>% 
@@ -142,14 +139,6 @@ md_landings <- read_excel(here::here("data/ListofSelectedSpecies.2002-2018.xlsx"
                    total_landings = sum(pounds, na.rm  = T),
                    total_trips = sum(days_out, na.rm = T))
 
-# md_specs <- unique(md_landings$species)
-# va_specs <- unique(va_landings$species)
-# specs <- unique(c(md_specs, va_specs))
-# specs <- specs[!specs %in% c("blue crab","Atlantic menhaden","horseshoe crab",
-#                              "horsehoe crab (male)", "menhaden","channel catfish",
-#                              "blue catfish")]
-# specs[str_detect(specs, "striped bass")] <- "striped bass"
-
 selected_specs <-
   c("Atlantic croaker",
     "weakfish",
@@ -171,28 +160,11 @@ all_landings <- bind_rows(va_landings %>%
                             # filter(year > 2004)) %>% # trip data is only valid in MD after 2004
   {. ->> all_landings_complete} %>% 
   filter(species %in% selected_specs) %>% 
-  # mutate(month = ifelse(month %in% c(1,2,3),
-  #                        3,# "winter-spring",
-  #                        ifelse(month %in% c(4,5),
-  #                              5,# 'spring',
-  #                        ifelse(month %in% c(6,7),
-  #                               7,#"summer",
-  #                               ifelse(month %in% c(8,9),
-  #                                      9,#'fall',
-  #                                      ifelse(month %in% c(10,11,12),
-  #                                             11)))))) %>% #'fall-winter'
   group_by(year, metacomm, species, month) %>%
   dplyr::summarise(total_value = sum(total_value),
                    total_landings = sum(total_landings),
                    total_trips = sum(total_trips))
 
-# ggplot(all_landings %>% filter(metacomm == "MD")) +
-#   geom_line(aes(y = total_landings, x = month, color = species)) +
-#   facet_wrap(~year)
-         # month %in% month_vec) #%>%  # Removing months where no data from ChesMMAP
-# filter((species %in% c("Atlantic croaker","spot","striped bass") & metacomm == "VA") |
-#          (species %in% c("striped bass","white perch","Atlantic croaker",
-#                         "spot") & metacomm == "MD"))
 # management area polygons for biomass indices
 va_mgmt <- NULL
 for (i in c("CBLE.kml", "CBLW.kml", "CBUE.kml", 

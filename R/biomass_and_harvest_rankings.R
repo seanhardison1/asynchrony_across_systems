@@ -17,7 +17,7 @@ cpi <-
                 value = Value)
 
 ref <- cpi %>% 
-  filter(year == 2002,
+  filter(year == 2010,
          month == 1) %>% 
   pull(value)
 
@@ -172,13 +172,6 @@ md_landings %>%
   dplyr::summarise(average_value = mean(total_value)) %>% 
   arrange(desc(average_value))
 
-md_landings %>% 
-  group_by(species, year) %>% 
-  filter(!species %in% c("blue crab")) %>% 
-  dplyr::summarise(total_value = sum(total_value, na.rm = T)) %>% 
-  ggplot() +
-    geom_line(aes(y = total_value, x = year, color = species))
-
 # average annual harvests
 va_landings %>% 
   group_by(species, year) %>% 
@@ -222,35 +215,3 @@ md_landings %>%
   dplyr::summarise(total = sum(total)) %>% 
   pull(total) %>% 
   range()
-
-
-# cpe_fig_left <- 
-  md_landings %>% 
-  filter(species %in% md_specs) %>% 
-  right_join(.,tibble(month = 1:12,
-                      metacomm = m) %>% 
-               expand_grid(species = md_specs,
-                           year = c(2002:2018))) %>% 
-  mutate(total_landings = ifelse(is.na(total_landings), 0, total_landings)) %>% 
-  filter(year %in% c(2004)) %>% 
-  ggplot() + 
-  geom_rect(aes(ymin = 0, ymax = Inf,
-                xmin = 3, xmax = 5),
-            fill = "#FFCCCC80",
-            color = "#FFCCCC80") +
-  labs(x = "Month",
-       y = labs(y = "Harvests (&times;10<sup>5</sup> lbs)"),
-       color = "Year") +
-  scale_x_continuous(expand = c(0.01, 0.01)) +
-  scale_y_continuous(expand = c(0.01, 0.01),
-                     labels = ylabf) +
-  geom_line(aes(y = total_landings, x = month, color = species),
-            linewidth = 1) +
-  geom_point(aes(y = total_landings, x = month, color = species)) +
-  scale_color_manual(values = fill_vec) +
-  # guides(color = "none") +
-  theme_bw() +
-  theme(axis.title.y = element_markdown(size = 13),
-        axis.title.x = element_markdown(size = 12),
-        axis.text = element_markdown(size = 12)) 
-
