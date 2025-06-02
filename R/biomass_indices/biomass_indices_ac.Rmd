@@ -5,7 +5,7 @@ output:
   html_document:
     df_print: paged
 author: Sean Hardison
-date: "2024-04-23"
+date: "2024-06-02"
 ---
 
 ```{r setup, include=TRUE, message = FALSE}
@@ -72,8 +72,6 @@ if (create_pred_df){
   load(file = here::here("data/prediction_grid.rdata"))
 }
 
-# nsims for simulation step
-nsims <- 2000
 ```
 
 ## Atlantic croaker
@@ -244,16 +242,16 @@ pred_out_seas <- bind_rows(pred_out_seas_va,
 
 ### Visualize predictions
 
-```{r, eval=T, fig.width=8, fig.height=5}
+```{r, eval=T, fig.width=6, fig.height=5}
 ggplot(pred_out_seas) +
   geom_errorbar(aes(ymax = upr, ymin = lwr, x = ymon),
                 width= 0.1, color = "gray50") +
   geom_line(aes(y = est, x = ymon)) +
   facet_wrap(~metacomm, scales = "free", nrow = 2) +
-  labs(title = selected_species)
+  labs(title = selected_species) 
 
-
-## save outputs
+## NOTE (6/2/25): the large confidence interval in the above plot for MD occurs during a month
+## when the ChesMMAP survey did not occur. 
 
 pred_out_seas_ac <- pred_out_seas %>% 
   as_tibble()
