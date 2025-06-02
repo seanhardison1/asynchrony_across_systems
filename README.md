@@ -1,9 +1,3 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
-
 Scripts and data for the manuscript *Seasonal asynchrony and harvest diversification contribute to demersal finfish fisheries stability in Chesapeake Bay, USA*
 
 Repository structure:
