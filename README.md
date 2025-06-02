@@ -1,14 +1,15 @@
-Scripts and data for the manuscript *Seasonal asynchrony and harvest diversification contribute to demersal finfish fisheries stability in Chesapeake Bay, USA*
+### Scripts and data for *Seasonal asynchrony and harvest diversification contribute to demersal finfish fisheries stability in Chesapeake Bay, USA*
 
-Repository structure:
-`data-raw/` - Landings data processing
-`R/` - Analysis scripts including 
-    1. Biomass index estimation (R/biomass_indices/)
-    2. Stability-asynchrony partitioning (R/stability_calculations/)
-    3. Structural equation modeling, trend modeling, and data visualizations (R/sems_trends_visuals.R)
-    4. Biomass and harvest data summaries ()
-`figs/` - Figures  
-`data/` - Data inputs and outputs
+### Repository structure
+
+- **`data-raw/`** – Landings data processing  
+- **`R/`** – Analysis scripts  
+  1. **Biomass index estimation** (`R/biomass_indices/`)  
+  1. **Stability–asynchrony partitioning** (`R/stability_calculations/stability_asynchrony_CB.R`, `R/stability_calculations/part_stab_functions.R`)  
+  1. **Structural equation modeling, trend modeling, and data visualizations** (`R/sems_trends_visuals.R`)  
+  1. **Biomass and harvest data summaries** (`R/biomass_and_harvest_summaries.R`)     
+- **`figs/`** – Figures  
+- **`data/`** – Data inputs and outputs  
 
 
-Please email [sbhardison@alaska.edu](sbhardison@alaska.edu) if you have questions.
+**Questions?**  Please email [ seanhardison@gmail.com ](mailto:seanhardison@gmail.com)
