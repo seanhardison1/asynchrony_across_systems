@@ -1,4 +1,4 @@
-### Scripts and data for *Seasonal asynchrony and harvest diversification contribute to demersal finfish fisheries stability in Chesapeake Bay, USA*
+### Scripts and data for *Seasonal asynchrony and harvest diversification contribute to demersal finfish fisheries stability in Chesapeake Bay*
 
 ### Repository structure
 
