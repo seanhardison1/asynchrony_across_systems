@@ -12,4 +12,6 @@
 - **`data/`** – Data inputs and outputs  
 
 
-**Questions?**  Please email [ seanhardison@gmail.com ](mailto:seanhardison@gmail.com)
+**Questions?**  Please email [ seanhardison@gmail.com ](mailto:seanhardison@gmail.com)  
+  
+[![DOI](https://zenodo.org/badge/804648116.svg)](https://doi.org/10.5281/zenodo.15995513)
